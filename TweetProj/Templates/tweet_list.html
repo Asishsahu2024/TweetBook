@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+{%extends 'layout.html'%}
+{%block title%}
+{%endblock%}
+{%block content%}
+<h1>Welcome to TweetBook</h1>
+<a href="{% url 'tweet_create'%}" class="btn btn-secondary mb-2">Create a Tweet</a>
+{%for tweet in tweets%}
+<div class="card" style="width: 18rem;">
+  <img src="{{tweet.photo.url}}" class="card-img-top" alt="...">
+  <div class="card-body">
+    <h5 class="card-title">{{tweet.user.username}}</h5>
+    <p class="card-text">{{tweet.text}}</p>
+    {%if tweet.user.username%}
+    <a href="{%url 'tweet_edit' tweet.id%}" class="btn btn-primary">Edit</a>
+      <a href="{%url 'tweet_delete' tweet.id%}" class="btn btn-danger">Delete</a>
+    {%endif%}
+  </div>
+</div>
+{%endfor%}
+{%endblock%}

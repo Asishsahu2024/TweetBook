@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+{%extends 'layout.html'%}
+{%block title%}
+{%endblock%}
+{%block content%}
+<h1>Welcome to TweetBook</h1>
+<h2>{%if form.instance.pk %}
+    Edit Tweet
+    {%else%}
+    Create Tweet</h2>
+{%endif%}
+<form method="post" enctype="multipart/form-data" class="form">
+    {{form.as_p}}
+    {%csrf_token%}
+    <button type="submit" class="btn btn-success">Submit</button>
+</form>
+<a href="{%url 'tweet_list'%}" class='btn btn-secondary mt-2'>Back to tweet list</a>
+{%endblock%}
