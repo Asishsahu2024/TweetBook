@@ -1,10 +1,13 @@
 from django.contrib.auth import login
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect
 from .models import Tweet
 from .forms import TweetForm,UserRegistrationForm
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
+from django.contrib.auth.models import User
+from django.contrib import messages
 
 # Create your views here.
 def index(request):
@@ -29,21 +32,30 @@ def tweet_create(request):
 
 @login_required
 def tweet_edit(request,tweet_id):
-    tweet=get_object_or_404(Tweet,pk=tweet_id,user=request.user)
+    try:
+        tweet=Tweet.objects.get(pk=tweet_id)
+    except Tweet.DoesNotExist:
+        return redirect('tweet_list')
+    if tweet.user != request.user and not request.user.is_superuser:
+        messages.error(request,"You cannot edit someone else's tweet.")
+        return redirect('tweet_list')
     if request.method=='POST':
-        form=TweetForm(request.POST,request.Files,instance=tweet)
+        form=TweetForm(request.POST,request.FILES,instance=tweet)
         if form.is_valid():
             tweet=form.save(commit=False)
-            tweet.user=request.user
+            tweet.user = request.user
             tweet.save()
             return redirect('tweet_list')
     else:
         form=TweetForm(instance=tweet)
-    return render(request,'',{'form':form})
+    return render(request,'tweet_form.html',{'form':form})
 
 @login_required
 def tweet_delete(request,tweet_id):
-    tweet=get_object_or_404(Tweet,pk=tweet_id,user=request.user)
+    try:
+        tweet=Tweet.objects.get(pk=tweet_id,user=request.user)
+    except Tweet.DoesNotExist:
+        return redirect('tweet_list')
     if request.method=='POST':
         tweet.delete()
         return redirect('tweet_list')
@@ -54,11 +66,16 @@ def register(request):
     if request.method=='POST':
         form=UserRegistrationForm(request.POST)
         if form.is_valid():
-            user=form.save(commit=False)
-            user.set_password(form.cleaned_data['password1'])
-            user.save()
-            login(request,user)
-            return redirect('tweet_list')
+            username=form.cleaned_data.get("username")
+            email=form.cleaned_data.get("email")
+            if User.objects.filter(username=username).exists():
+                form.add_error("email","This username is already registered.")
+            else:
+                user=form.save(commit=False)
+                user.set_password(form.cleaned_data['password1'])
+                user.save()
+                login(request,user)
+                return redirect('tweet_list')
     else:
         form=UserRegistrationForm()
     return render(request,'registration/register.html',{'form':form})
